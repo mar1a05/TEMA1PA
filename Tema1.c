@@ -5,7 +5,6 @@
 
 typedef struct Player
 {
-
     char *surname;
     char *firstName;
     int points;
@@ -14,13 +13,19 @@ typedef struct Player
 
 typedef struct TeamData
 {
-
     int nrPlayers;
     char *teamName;
     Player *player;
     float teamPoints;
 
 } TeamData;
+
+typedef struct MatchTeamData
+{
+    char *teamName;
+    float points;
+
+} MatchTeamData;
 
 typedef struct TeamNode
 {
@@ -29,6 +34,35 @@ typedef struct TeamNode
 
 } TeamNode;
 
+typedef struct Match
+{
+    MatchTeamData team1;
+    MatchTeamData team2;
+
+} Match;
+
+typedef struct MatchNode
+{
+    Match teams;
+    struct MatchNode *next;
+
+} MatchNode;
+
+typedef struct Queue
+{
+    MatchNode *front;
+    MatchNode *rear;
+} Queue;
+
+typedef struct StackNode
+{
+    MatchTeamData team;
+    struct StackNode *next;
+} StackNode;
+
+
+//task 1
+
 void addTeam(TeamNode **teamsHead, TeamData team)
 {
 
@@ -36,9 +70,11 @@ void addTeam(TeamNode **teamsHead, TeamData team)
     newTeam->teamData = team;
     newTeam->next = *teamsHead;
     *teamsHead = newTeam;
+    
 }
 
 void print(TeamNode *teamsHead){
+
     while(teamsHead != NULL)
     {
         //printf("%d\n", teamsHead->teamData.nrPlayers);
@@ -51,6 +87,7 @@ void print(TeamNode *teamsHead){
         // printf("\n");
         teamsHead = teamsHead->next;
     }
+
 }
 
 void printOneTeam(TeamNode *teamsHead){
@@ -63,7 +100,6 @@ void printOneTeam(TeamNode *teamsHead){
         printf("%s %s %d\n", teamsHead->teamData.player[j].surname, teamsHead->teamData.player[j].firstName, teamsHead->teamData.player[j].points);
     }
     printf("\n");
-
 
 }
 
@@ -123,7 +159,14 @@ void readTeams(char fileName[], TeamNode **teamsHead, int *nrTeams)
         char teamName[50], surname[50], firstName[50];
 
         fgets(teamName, 1023, teamsFile);
-        team.teamName = (char*)malloc((strlen(teamName)+1)*sizeof(char));
+        teamName[strlen(teamName)-2] = '\0';
+        // for(int i = 0; i < strlen(teamName); i++)
+        //     {
+                
+        //         printf("%d:%c\n", i, teamName[i]);
+        //     }
+        // break;
+        team.teamName = (char*)malloc((strlen(teamName))*sizeof(char));
         strcpy(team.teamName, teamName);
         team.player = (Player *)malloc((team.nrPlayers) * sizeof(Player));
 
@@ -149,8 +192,8 @@ void writeTeams(char fileName[], TeamNode *teamsHead){
     FILE *f = fopen(fileName, "w");
     
     while(teamsHead != NULL){
-        fprintf(f, "%s", teamsHead->teamData.teamName);
-        
+        fprintf(f, "%s\n", teamsHead->teamData.teamName);
+                
         teamsHead = teamsHead->next;
     }
     fclose(f);
@@ -174,7 +217,7 @@ int getMaxPowerOf2(int nrTeams){
         i++;
     }
     
-    return pow(2, i-1);
+    return (i-1);
 }
 
 float minPoints(TeamNode *teamsHead){
@@ -195,7 +238,7 @@ float minPoints(TeamNode *teamsHead){
 
 void clearTeams(TeamNode **teamsHead, int nrTeams){
     
-    int n = getMaxPowerOf2(nrTeams);
+    int n = pow(2, getMaxPowerOf2(nrTeams));
 
     while(nrTeams > n)
     {    
@@ -219,6 +262,404 @@ void clearTeams(TeamNode **teamsHead, int nrTeams){
     }
 }
 
+//task 3
+
+void deleteStack(StackNode **top)
+{
+    StackNode *temp;
+    while((*top)!=NULL)
+    {
+        temp = *top;
+        *top = (*top)->next;
+        free(temp);
+    }
+}
+
+int isStackEmpty(StackNode *top)
+{
+    return top==NULL;
+}
+
+int isQueueEmpty(Queue *q)
+{
+    return (q->front == NULL);
+}
+
+void getTeamInfoFromQueueToStack(MatchTeamData source, MatchTeamData *target)
+{
+    strcpy((*target).teamName, source.teamName);
+    (*target).points = source.points;
+}
+
+
+/////////////////////////////////
+
+
+
+MatchTeamData topElementStackData(StackNode *top)
+{
+
+    if (isStackEmpty(top))
+    {
+        printf("Couldn't return top element data. Stack is empty");
+        return;
+    }
+
+    return top->team;
+}
+
+
+
+
+/*
+    print task 2
+    task 3:
+    for()
+    {
+        if(prima runda)
+        {
+            fac coada din lista initiala
+        }
+        else
+        {
+            populez coada din stiva de winners
+            golesc winners
+        }
+        print coada
+        populez winners losers si golesc coada cand le populez
+        print winners
+        golesc losers
+    }
+    
+*/
+
+void createStacks(Queue *q, StackNode **Winners, StackNode **Losers)
+{
+    // printMatchesQueue(q->front);
+    while (!isQueueEmpty(q))
+    {
+
+        // printf("%f\n", q->front->teams.team1.points);
+        if (q->front->teams.team1.points >= q->front->teams.team2.points)
+        {
+            push(Winners, q->front->teams.team1);
+            push(Losers, q->front->teams.team2);
+
+        }
+        else
+        {
+            push(Winners, q->front->teams.team2);
+            push(Losers, q->front->teams.team1);
+        }
+
+        removeMatch(q);
+        
+    }
+}
+
+
+
+
+void push(StackNode **top, MatchTeamData team)
+{
+    StackNode *newTeam = (StackNode*)malloc(sizeof(StackNode));
+    newTeam->team.teamName = malloc(sizeof(char) * strlen(team.teamName));
+    getTeamInfoFromQueueToStack(team, &(newTeam->team));
+    newTeam->next = *top;
+    *top = newTeam;
+}
+
+void pop(StackNode **top)
+{
+    if(isStackEmpty(*top))
+    {
+        printf("Couldn't pop element. Stack is empty");
+        return;
+    }
+
+    StackNode *temp = (*top);
+
+    //if((*top)->next != NULL)
+    *top = (*top)->next;
+
+    free(temp->team.teamName);
+    free(temp);
+}
+
+void makeMatchesQueueFromStack(Queue **matches, StackNode **winners) //?
+{
+    int i=0;
+
+    StackNode *aux = *winners;
+    while(!isStackEmpty(aux))
+    {
+        i++;
+        aux = aux->next;
+    }
+    
+    while(!isStackEmpty(*winners))
+    {
+        MatchTeamData team1, team2;
+        team1.teamName = malloc(sizeof(char) * strlen((*winners)->team.teamName));
+        // printf("%d\n", i);
+
+        strcpy(team1.teamName, (*winners)->team.teamName);
+        team1.points = (*winners)->team.points;
+
+
+        // printf("%s\n", (*winners)->team.teamName);
+        // if(i==4)
+            // printf("%s %f\n", team1.teamName, team1.points);
+
+
+        pop(winners);
+
+        team2.teamName = malloc(sizeof(char) * strlen((*winners)->team.teamName));
+
+        strcpy(team2.teamName, (*winners)->team.teamName);
+        team2.points = (*winners)->team.points;
+        // printf("%s\n", (*winners)->team.teamName);
+        // if(i==4)
+        //     printf("%s %f\n", team2.teamName, team2.points);
+
+        
+        pop(winners);
+        addMatchFromStack(matches, team1, team2);
+        // if(i==4)
+            // printMatchesQueue(*matches);
+        free(team1.teamName);
+        free(team2.teamName);
+        
+    }
+    // printMatchesQueue(*matches);
+}
+
+void addMatchFromStack(Queue **q, MatchTeamData team1, MatchTeamData team2) //?
+{
+    
+    // printf("%s %f\n", team1.teamName, team1.points);
+    // printf("%s %f\n", team2.teamName, team2.points);
+    
+    
+    MatchNode *newMatch=(MatchNode*)malloc(sizeof(MatchNode));
+    newMatch->teams.team1.teamName = malloc(sizeof(char)*strlen(team1.teamName));
+    newMatch->teams.team2.teamName = malloc(sizeof(char)*strlen(team2.teamName));
+
+    strcpy(newMatch->teams.team1.teamName, team1.teamName);
+    strcpy(newMatch->teams.team2.teamName, team2.teamName);
+    newMatch->teams.team1.points = team1.points;
+    newMatch->teams.team2.points = team2.points;
+
+    newMatch->next = NULL;
+
+
+
+    if((*q)->rear == NULL)
+        (*q)->rear = newMatch;
+    else
+    {
+        ((*q)->rear)->next = newMatch;
+        ((*q)->rear) = newMatch;
+    }    
+
+    if((*q)->front == NULL)
+        (*q)->front = (*q)->rear;
+}
+
+
+void printStack(StackNode *stackTop, char fileName[], int i)
+{
+    StackNode *aux = stackTop;
+    while(aux != NULL)
+    {
+
+        printf("%s %f\n", aux->team.teamName, aux->team.points);
+        
+        aux = aux->next;
+    }
+}
+
+void printWinnersStack(StackNode *stackTop, char fileName[], int i)
+{
+    printf("%d\n", i);
+    FILE *f = fopen(fileName, "a");
+    // fprintf(f, "WINNERS OF ROUND NO:%d\n", i);
+    
+    // StackNode *aux = stackTop;
+
+    // while(aux != NULL)
+    // {
+    //     int spaces = 34 - strlen(aux->team.teamName);
+    //     fprintf(f, "%s", aux->team.teamName);
+    //     for(int i = 0; i < spaces; i++)
+    //         fprintf(f, " ");
+    //     fprintf(f, "-  %.2f\n", aux->team.points);
+        
+    //     aux = aux->next;
+    // }
+}
+
+void getTeamData(MatchTeamData *target, TeamData source)
+{
+    strcpy((*target).teamName, source.teamName);
+    (*target).points = source.teamPoints;
+}
+
+Queue* createQueue(){
+    Queue *q;
+    q = (Queue*)malloc(sizeof(Queue));
+    if(q == NULL)
+        return NULL;
+    q->front = q->rear = NULL;
+    return q;
+}
+
+void deleteQueue(Queue **q)
+{
+    MatchNode *aux;
+    while(!isQueueEmpty(*q)){
+
+        aux = (*q)->front;
+        (*q)->front = (*q)->front->next;
+
+        free(aux);
+    }
+
+    free(*q);
+}
+
+void addMatch(Queue **matches, TeamData team1, TeamData team2)
+{
+    MatchNode *newMatch=(MatchNode*)malloc(sizeof(MatchNode));
+    newMatch->teams.team1.teamName = malloc(sizeof(char)*strlen(team1.teamName));
+    newMatch->teams.team2.teamName = malloc(sizeof(char)*strlen(team2.teamName));
+
+    getTeamData(&(newMatch->teams.team1), team1);
+    getTeamData(&(newMatch->teams.team2), team2);
+
+    newMatch->next = NULL;
+
+    if((*matches)->rear == NULL)
+        (*matches)->rear = newMatch;
+    else
+    {
+        ((*matches)->rear)->next = newMatch;
+        ((*matches)->rear) = newMatch;
+    }    
+
+    if((*matches)->front == NULL)
+        (*matches)->front = (*matches)->rear;
+}
+
+void removeMatch(Queue *matches)
+{
+    MatchNode *aux;
+
+    if(isQueueEmpty(matches)) 
+    {
+        printf("No matches in queue");
+        return;
+    }
+
+    aux = matches->front;
+
+    if(matches->front->next != NULL)
+    {
+        matches->front = matches->front->next;
+    }
+    else
+    {
+        matches->front = NULL;
+    }
+
+    free(aux->teams.team1.teamName);
+    free(aux->teams.team2.teamName);
+    free(aux);
+
+}
+
+void makeMatchesQueue(Queue **matches, TeamNode *teamsHead)
+{
+
+    TeamNode *q = teamsHead;
+
+    while(q != NULL){
+
+
+        addMatch(matches, q->teamData, q->next->teamData);
+
+        q = q->next->next;
+    }
+}
+
+void printMatchesQueue(MatchNode *matches)
+{
+    while(matches != NULL)
+    {
+
+        printf("%s %f\n", matches->teams.team1.teamName, matches->teams.team1.points);
+        printf("%s %f\n\n", matches->teams.team2.teamName, matches->teams.team2.points);
+         
+        matches = matches->next;
+    }
+
+}
+
+
+void printRound(MatchNode *matches, char fileName[], int i)
+{
+    FILE *f = fopen(fileName, "a");
+    fprintf(f, "\n--- ROUND NO:%d\n", i);
+    while(matches != NULL)
+    {
+
+        int spaces = 33 - strlen(matches->teams.team1.teamName);
+        fprintf(f, "%s", matches->teams.team1.teamName);
+        for(int j = 0; j < spaces; j++)
+            fprintf(f, " ");
+
+        fprintf(f, "-");
+
+        spaces = 33 - strlen(matches->teams.team2.teamName);
+        for(int j = 0; j < spaces; j++)
+            fprintf(f, " ");
+        fprintf(f, "%s\n", matches->teams.team2.teamName);
+
+        matches = matches->next;
+    }
+    fclose(f);
+}
+
+void rounds(StackNode **Winners, StackNode **Losers, Queue **matches, TeamNode *teamsHead, char fileName[], int round)
+{   
+    if(round == 1)
+    {
+        makeMatchesQueue(matches, teamsHead);
+
+    }
+    else
+    {
+        makeMatchesQueueFromStack(matches, Winners); //
+        // printf("1\n");
+
+        //deleteStack(Winners);
+        // printf("2\n");
+    }
+    // printf("1.2\n");
+    printRound((*matches)->front, fileName, round);
+    // printf("2.2\n");
+    // printMatchesQueue((*matches)->front);
+    createStacks((*matches), Winners, Losers);
+    // printf("3\n");
+    // printStack(*Winners, fileName, round);
+    // printWinnersStack((*Winners), fileName, round);
+    // printf("4\n");
+
+    deleteStack(Losers);
+    // printf("5\n");
+
+}
+
 int main(int argc, char **argv)
 {
     TeamNode *teamsHead = NULL;
@@ -226,27 +667,45 @@ int main(int argc, char **argv)
 
     readTeams(argv[2], &teamsHead, &nrTeams);
 
-    //print(teamsHead);
-    //deleteTeam(&teamsHead, 3);
-    //print(teamsHead);
-
     int *tasks;
     tasks = readTasks(argv[1]);
 
+   
     if(tasks[4] == 1)
         return 0;
     else if(tasks[3] == 1)
         return 0;
     else if(tasks[2] == 1)
-        return 0;
+    {
+        clearTeams(&teamsHead, nrTeams);
+        writeTeams(argv[3], teamsHead);
+        
+        Queue* matchesQueue = createQueue();
+        // makeMatchesQueue(&matchesQueue, teamsHead);
+        // printRound(matchesQueue->front, argv[3], 1);
+
+        StackNode *Winners, *Losers;
+        Winners = Losers = NULL;
+
+        int nrOfRounds = getMaxPowerOf2(nrTeams);
+
+        for(int i = 1; i <= nrOfRounds; i++)
+        {
+            //printf("round = %d\n", i+1);
+            rounds(&Winners, &Losers, &matchesQueue, teamsHead, argv[3], i);
+        }
+        
+    }
     else if(tasks[1] == 1)
     {
         clearTeams(&teamsHead, nrTeams); //task2
         writeTeams(argv[3], teamsHead);
     }
     else if(tasks[0] == 1)
-        writeTeams(argv[3], teamsHead);
+    {
+        writeTeams(argv[3], teamsHead); //task 1
+    }
     
-
+    
     return 0;
 }
