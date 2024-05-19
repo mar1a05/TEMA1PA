@@ -105,15 +105,15 @@ void printOneTeam(TeamNode *teamsHead){
 
 void freeTeam(TeamNode *teamsHead){
     
-    free(teamsHead->teamData.teamName);
+  free(teamsHead->teamData.teamName);
 
     for(int i = 0; i < teamsHead->teamData.nrPlayers; i++)
     { 
-        free(teamsHead->teamData.player[i].firstName);
-        free(teamsHead->teamData.player[i].surname);
+      free(teamsHead->teamData.player[i].firstName);
+      free(teamsHead->teamData.player[i].surname);
     }
 
-    free(teamsHead);
+  free(teamsHead);
 
 }
 
@@ -144,6 +144,22 @@ void deleteTeam(TeamNode **teamsHead, int i){
     freeTeam(deletedTeam);
 }
 
+char *trimSpaces(char string[])
+{
+    while(string[strlen(string) - 1] == ' ')
+    {
+        string[strlen(string) - 1] = '\0';
+    }
+
+    while(string[0] == ' ')
+    {
+        for(int i = 1; i < strlen(string); i++)
+            string[i - 1] = string[i];
+    }
+
+    return string;
+}
+
 void readTeams(char fileName[], TeamNode **teamsHead, int *nrTeams)
 {
 
@@ -160,14 +176,9 @@ void readTeams(char fileName[], TeamNode **teamsHead, int *nrTeams)
 
         fgets(teamName, 1023, teamsFile);
         teamName[strlen(teamName)-2] = '\0';
-        // for(int i = 0; i < strlen(teamName); i++)
-        //     {
-                
-        //         printf("%d:%c\n", i, teamName[i]);
-        //     }
-        // break;
         team.teamName = (char*)malloc((strlen(teamName))*sizeof(char));
-        strcpy(team.teamName, teamName);
+        strcpy(team.teamName, trimSpaces(teamName));
+        
         team.player = (Player *)malloc((team.nrPlayers) * sizeof(Player));
 
         for (int j = 0; j < team.nrPlayers; j++)
@@ -271,13 +282,14 @@ void deleteStack(StackNode **top)
     {
         temp = *top;
         *top = (*top)->next;
+        free(temp->team.teamName);
         free(temp);
     }
 }
 
 int isStackEmpty(StackNode *top)
 {
-    return top==NULL;
+    return top == NULL;
 }
 
 int isQueueEmpty(Queue *q)
@@ -340,20 +352,21 @@ void createStacks(Queue *q, StackNode **Winners, StackNode **Losers)
     {
 
         // printf("%f\n", q->front->teams.team1.points);
-        if (q->front->teams.team1.points >= q->front->teams.team2.points)
+        if (q->front->teams.team1.points > q->front->teams.team2.points)
         {
+            q->front->teams.team1.points += 1;
             push(Winners, q->front->teams.team1);
             push(Losers, q->front->teams.team2);
 
         }
         else
         {
+            q->front->teams.team2.points += 1;
             push(Winners, q->front->teams.team2);
             push(Losers, q->front->teams.team1);
         }
 
         removeMatch(q);
-        
     }
 }
 
@@ -382,8 +395,8 @@ void pop(StackNode **top)
     //if((*top)->next != NULL)
     *top = (*top)->next;
 
-    free(temp->team.teamName);
-    free(temp);
+  free(temp->team.teamName);
+  free(temp);
 }
 
 void makeMatchesQueueFromStack(Queue **matches, StackNode **winners) //?
@@ -420,15 +433,15 @@ void makeMatchesQueueFromStack(Queue **matches, StackNode **winners) //?
         team2.points = (*winners)->team.points;
         // printf("%s\n", (*winners)->team.teamName);
         // if(i==4)
-        //     printf("%s %f\n", team2.teamName, team2.points);
+            // printf("%s %f\n", team2.teamName, team2.points);
 
         
         pop(winners);
         addMatchFromStack(matches, team1, team2);
         // if(i==4)
             // printMatchesQueue(*matches);
-        free(team1.teamName);
-        free(team2.teamName);
+      free(team1.teamName);
+      free(team2.teamName);
         
     }
     // printMatchesQueue(*matches);
@@ -469,34 +482,38 @@ void addMatchFromStack(Queue **q, MatchTeamData team1, MatchTeamData team2) //?
 
 void printStack(StackNode *stackTop, char fileName[], int i)
 {
+    int j = 0;
     StackNode *aux = stackTop;
     while(aux != NULL)
     {
-
+        j++;
         printf("%s %f\n", aux->team.teamName, aux->team.points);
-        
+        printf("isStackEmpty %d\n", aux->next == NULL);
+        if(j == 5)
+            return;
         aux = aux->next;
     }
 }
 
 void printWinnersStack(StackNode *stackTop, char fileName[], int i)
 {
-    printf("%d\n", i);
     FILE *f = fopen(fileName, "a");
-    // fprintf(f, "WINNERS OF ROUND NO:%d\n", i);
+    fprintf(f, "\nWINNERS OF ROUND NO:%d\n", i);
     
-    // StackNode *aux = stackTop;
+    StackNode *aux = stackTop;
 
-    // while(aux != NULL)
-    // {
-    //     int spaces = 34 - strlen(aux->team.teamName);
-    //     fprintf(f, "%s", aux->team.teamName);
-    //     for(int i = 0; i < spaces; i++)
-    //         fprintf(f, " ");
-    //     fprintf(f, "-  %.2f\n", aux->team.points);
+    while(aux != NULL)
+    {
+        int spaces = 34 - strlen(aux->team.teamName);
+        fprintf(f, "%s", aux->team.teamName);
+        for(int i = 0; i < spaces; i++)
+            fprintf(f, " ");
+        fprintf(f, "-  %.2f\n", aux->team.points);
         
-    //     aux = aux->next;
-    // }
+        aux = aux->next;
+    }
+
+    fclose(f);
 }
 
 void getTeamData(MatchTeamData *target, TeamData source)
@@ -570,6 +587,7 @@ void removeMatch(Queue *matches)
     else
     {
         matches->front = NULL;
+        matches->rear = NULL;
     }
 
     free(aux->teams.team1.teamName);
@@ -594,12 +612,15 @@ void makeMatchesQueue(Queue **matches, TeamNode *teamsHead)
 
 void printMatchesQueue(MatchNode *matches)
 {
+   int i = 0;
     while(matches != NULL)
     {
-
+        i++;
         printf("%s %f\n", matches->teams.team1.teamName, matches->teams.team1.points);
         printf("%s %f\n\n", matches->teams.team2.teamName, matches->teams.team2.points);
-         
+        printf("isQueueEmpty %d\n", matches->next == NULL);
+        if(i == 5)
+            return;
         matches = matches->next;
     }
 
@@ -627,6 +648,7 @@ void printRound(MatchNode *matches, char fileName[], int i)
 
         matches = matches->next;
     }
+
     fclose(f);
 }
 
@@ -639,25 +661,15 @@ void rounds(StackNode **Winners, StackNode **Losers, Queue **matches, TeamNode *
     }
     else
     {
-        makeMatchesQueueFromStack(matches, Winners); //
-        // printf("1\n");
-
-        //deleteStack(Winners);
-        // printf("2\n");
+        makeMatchesQueueFromStack(matches, Winners);
     }
-    // printf("1.2\n");
+
     printRound((*matches)->front, fileName, round);
-    // printf("2.2\n");
-    // printMatchesQueue((*matches)->front);
     createStacks((*matches), Winners, Losers);
-    // printf("3\n");
-    // printStack(*Winners, fileName, round);
-    // printWinnersStack((*Winners), fileName, round);
-    // printf("4\n");
+
+    printWinnersStack((*Winners), fileName, round);
 
     deleteStack(Losers);
-    // printf("5\n");
-
 }
 
 int main(int argc, char **argv)
