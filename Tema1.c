@@ -60,6 +60,15 @@ typedef struct StackNode
     struct StackNode *next;
 } StackNode;
 
+typedef struct BST
+{
+    MatchTeamData team;
+    struct BST *left;
+    struct BST *right;
+} BST;
+
+
+
 
 //task 1
 
@@ -198,17 +207,17 @@ void readTeams(char fileName[], TeamNode **teamsHead, int *nrTeams)
     }
 }
 
-void writeTeams(char fileName[], TeamNode *teamsHead){
-
+void writeTeams(char fileName[], TeamNode *teamsHead)
+{
     FILE *f = fopen(fileName, "w");
-    
+
     while(teamsHead != NULL){
         fprintf(f, "%s\n", teamsHead->teamData.teamName);
                 
         teamsHead = teamsHead->next;
     }
-    fclose(f);
 
+    fclose(f);
 }
 
 int *readTasks(char *fileName){
@@ -626,7 +635,6 @@ void printMatchesQueue(MatchNode *matches)
 
 }
 
-
 void printRound(MatchNode *matches, char fileName[], int i)
 {
     FILE *f = fopen(fileName, "a");
@@ -672,41 +680,172 @@ void rounds(StackNode **Winners, StackNode **Losers, Queue **matches, TeamNode *
     deleteStack(Losers);
 }
 
+//task 4
+
+BST *addInTree(BST *tree, MatchTeamData team)
+{
+    if(tree == NULL)
+    {
+        tree = malloc(sizeof(BST));
+        tree->team.teamName = malloc(sizeof(char) * strlen(team.teamName));
+
+        strcpy(tree->team.teamName, team.teamName);
+        tree->team.points = team.points;
+
+        tree->left = tree->right = NULL;
+        
+        // printf("tree: %s %f\n", tree->team.teamName, tree->team.points);
+
+
+        return tree;
+    }
+
+    // printf("current node: %s %f - %s %f\n", tree->team.teamName, tree->team.points, team.teamName, team.points);
+
+
+    if(team.points < tree->team.points)
+    {
+        // printf("Points left\n");
+        tree->left = addInTree(tree->left, team);
+    }
+
+    else if(team.points > tree->team.points)
+    {
+        // printf("Points right\n");
+        
+        tree->right = addInTree(tree->right, team);
+    }
+
+    else
+    {
+        if(strcmp(team.teamName, tree->team.teamName) < 0)
+        {
+            // printf("Team left\n");
+            
+            tree->left = addInTree(tree->left, team);  
+        }
+        else
+        {
+            // printf("Team right\n");
+            
+            tree->right = addInTree(tree->right, team);
+        }
+    }
+
+    return tree;
+}
+
+BST *createBST(StackNode *Winners){
+
+    BST *tree = NULL;
+    while(!isStackEmpty(Winners))
+    {
+        // printf("Winner: %s %f\n", Winners->team.teamName, Winners->team.points);
+
+        tree = addInTree (tree, Winners->team);
+        // printf("create: %s %f\n", tree->team.teamName, tree->team.points);
+
+        // printTree(tree, "...");
+
+
+        Winners = Winners->next;
+    }
+
+    return tree;
+}
+
+void printTreeNode(BST* tree, FILE* f)
+{
+    int spaces = 34 - strlen(tree->team.teamName);
+    fprintf(f, "%s", tree->team.teamName);
+    // printf("%s", tree->team.teamName);
+
+    for(int i = 0; i < spaces; i++)
+        fprintf(f, " ");
+    fprintf(f, "-  %.2f\n", tree->team.points);
+    // printf("-  %.2f\n", tree->team.points);
+}
+
+void printTree(BST *tree, FILE* f)
+{
+    if(tree->left == NULL && tree->right == NULL)
+    {
+        printTreeNode(tree, f);
+        return;
+    }
+    
+    if(tree->right != NULL)
+        printTree(tree->right, f);
+
+    printTreeNode(tree, f);
+
+    if(tree->left != NULL)
+        printTree(tree->left, f);
+
+    return;
+}
+
+// task 5
+
+
+
 int main(int argc, char **argv)
 {
     TeamNode *teamsHead = NULL;
     int nrTeams = 0;
 
     readTeams(argv[2], &teamsHead, &nrTeams);
+    
+    // TeamNode *aux = teamsHead;
+    // while(aux != NULL)
+    // {
+    //     printf("%s %f\n", aux->teamData.teamName, aux->teamData.teamPoints);
+    //     aux = aux->next;
+    // }
 
     int *tasks;
     tasks = readTasks(argv[1]);
 
+    BST *tree = NULL;
    
     if(tasks[4] == 1)
         return 0;
-    else if(tasks[3] == 1)
-        return 0;
+    
     else if(tasks[2] == 1)
     {
         clearTeams(&teamsHead, nrTeams);
         writeTeams(argv[3], teamsHead);
         
         Queue* matchesQueue = createQueue();
-        // makeMatchesQueue(&matchesQueue, teamsHead);
-        // printRound(matchesQueue->front, argv[3], 1);
 
         StackNode *Winners, *Losers;
         Winners = Losers = NULL;
 
         int nrOfRounds = getMaxPowerOf2(nrTeams);
-
+        
         for(int i = 1; i <= nrOfRounds; i++)
         {
-            //printf("round = %d\n", i+1);
             rounds(&Winners, &Losers, &matchesQueue, teamsHead, argv[3], i);
+
+            if(i == nrOfRounds - 3 && tasks[3] == 1) //task 4
+            {
+                // printf("top 8\n");
+                tree = createBST(Winners);
+            }
         }
-        
+        if(tasks[3] == 1) // print task 4
+        {
+            if(tree != NULL)
+            {
+                FILE *f = fopen(argv[3], "a");
+
+                fprintf(f, "\nTOP 8 TEAMS:\n");
+                printTree(tree, f);
+                
+                fclose(f);            
+            }
+        }
+
     }
     else if(tasks[1] == 1)
     {
@@ -716,6 +855,7 @@ int main(int argc, char **argv)
     else if(tasks[0] == 1)
     {
         writeTeams(argv[3], teamsHead); //task 1
+        
     }
     
     
