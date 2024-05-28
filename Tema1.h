@@ -135,9 +135,8 @@ AVL *RLRotation(AVL*z);
 AVL *insert(AVL *root, MatchTeamData team);
 AVL *createAVL(BST *BSTroot);
 void createAVLfromBST(BST *BST, AVL **AVL);
-// void printAVLLayer(AVL *root, FILE *f, int level);
 void printAVL(AVL *root, FILE *f, int level);
-void printTreeAVL(AVL *root, int level);
+
 
 
 

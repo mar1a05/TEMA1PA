@@ -729,7 +729,6 @@ AVL *insert(AVL *root, MatchTeamData team)
 
     root->height = 1 + maxNumber(nodeHeight(root->left), nodeHeight(root->right));
 
-    //root->height = 1 + maxNumber(root->left->height, root->right->height);
 
     int k = (nodeHeight(root->left) - nodeHeight(root->right));
 
@@ -770,10 +769,7 @@ AVL *insert(AVL *root, MatchTeamData team)
 
 AVL *createAVL(BST *BSTroot) 
 {
-
-    AVL *root = NULL;
-    // root->left = NULL;
-    // root->right = NULL;    
+    AVL *root = NULL; 
 
     createAVLfromBST(BSTroot, &root);
 
@@ -789,22 +785,6 @@ void createAVLfromBST(BST *BST, AVL **AVL)
     *AVL = insert(*AVL, BST->team);
     createAVLfromBST(BST->left, AVL);
 }
-
-// void printAVLLayer(AVL *root, FILE *f)
-// {
-//     if(root == NULL)
-//             return;
-//     if(root->height == 2)
-//     {
-//         printAVLLayer(root->left, f);
-//         fprintf(f, "%s %d\n", root->team.teamName, root->height);
-//         printAVLLayer(root->right, f);
-//         // fprintf(f, "%s\n", root->team.teamName);
-
-//     }
-// }
-
-
 
 void printAVL(AVL *root, FILE *f, int level)
 {
@@ -822,26 +802,4 @@ void printAVL(AVL *root, FILE *f, int level)
         printAVL(root->left, f, level - 1);
     }
 
-}
-
-void printTreeAVL(AVL *root, int level) {
-    int i;
-    if (root == NULL) {
-        return;
-    }
-
-    // Crește distanța între niveluri
-
-    // Procesăm fiul drept mai întâi
-    printTreeAVL(root->right, level + 1);
-
-    // Afișăm nodul curent după spațierea corespunzătoare
-    printf("\n");
-    for (i = 0; i < level; i++) {
-        printf("\t");
-    }
-    printf("%s\n", root->team.teamName);
-
-    // Procesăm fiul stâng
-    printTreeAVL(root->left, level +1);
 }
