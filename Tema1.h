@@ -67,6 +67,14 @@ typedef struct BST
     struct BST *right;
 } BST;
 
+typedef struct AVL
+{
+    int height;
+    MatchTeamData team;
+    struct AVL *left;
+    struct AVL *right;
+}AVL;
+
 //task 1
 
 void addTeam(TeamNode **teamsHead, TeamData team);
@@ -115,6 +123,21 @@ BST *addInTree(BST *tree, MatchTeamData team);
 BST *createBST(StackNode *Winners);
 void printTreeNode(BST* tree, FILE* f);
 void printTree(BST *tree, FILE* f);
+
+//task 5
+
+int nodeHeight(AVL *root);
+int maxNumber(int a, int b);
+AVL *RightRotation(AVL *z);
+AVL *LeftRotation(AVL *z);
+AVL *LRRotation(AVL *z);
+AVL *RLRotation(AVL*z);
+AVL *insert(AVL *root, MatchTeamData team);
+AVL *createAVL(BST *BSTroot);
+void createAVLfromBST(BST *BST, AVL **AVL);
+// void printAVLLayer(AVL *root, FILE *f, int level);
+void printAVL(AVL *root, FILE *f, int level);
+void printTreeAVL(AVL *root, int level);
 
 
 

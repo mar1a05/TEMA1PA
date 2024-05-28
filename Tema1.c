@@ -1,8 +1,6 @@
 #include "Tema1.h"
 
 
-//task 1
-
 int main(int argc, char **argv)
 {
     TeamNode *teamsHead = NULL;
@@ -14,11 +12,10 @@ int main(int argc, char **argv)
     tasks = readTasks(argv[1]);
 
     BST *tree = NULL;
+
+    AVL *AVLtree = NULL;
    
-    if(tasks[4] == 1)
-        return 0;
-    
-    else if(tasks[2] == 1)
+    if(tasks[2] == 1)
     {
         clearTeams(&teamsHead, nrTeams);
         writeTeams(argv[3], teamsHead);
@@ -39,6 +36,7 @@ int main(int argc, char **argv)
                 tree = createBST(Winners);
             }
         }
+
         if(tasks[3] == 1) // print task 4
         {
             if(tree != NULL)
@@ -51,7 +49,18 @@ int main(int argc, char **argv)
                 fclose(f);            
             }
         }
+        if(tasks[4] == 1) //task 5
+        {
+            AVLtree = createAVL(tree);
+            
+            FILE *f = fopen(argv[3], "a");
 
+            fprintf(f, "\nTHE LEVEL 2 TEAMS ARE:\n");
+
+            printAVL(AVLtree, f, 3);
+
+            fclose(f);
+        }
     }
     else if(tasks[1] == 1)
     {
@@ -63,7 +72,5 @@ int main(int argc, char **argv)
         writeTeams(argv[3], teamsHead); //task 1
         
     }
-    
-    
     return 0;
 }

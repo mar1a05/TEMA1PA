@@ -639,3 +639,209 @@ void printTree(BST *tree, FILE* f)
 
     return;
 }
+
+//task 5
+
+int nodeHeight(AVL *root)
+{
+    if(root == NULL) return -1;
+    else 
+        return root->height;
+}
+
+int maxNumber(int a, int b)
+{
+    return (a > b) ? a : b;
+}
+
+AVL *RightRotation(AVL *z)
+{
+    AVL *y = z->left;
+    AVL *T3 = y->right;
+
+    y->right = z;
+    z->left = T3;
+
+    z->height = maxNumber(nodeHeight(z->left), nodeHeight(z->right)) + 1;
+    y->height = maxNumber(nodeHeight(y->left), nodeHeight(y->right)) + 1;
+
+    // z->height = maxNumber(z->left->height, z->right->height) + 1;
+    // y->height = maxNumber(y->left->height, y->right->height) + 1;
+
+
+    return y;
+}
+
+AVL *LeftRotation(AVL *z)
+{
+    AVL *y = z->right;
+    AVL *T2 = y->left;
+    y->left = z;
+    z->right = T2;
+
+    z->height = maxNumber(nodeHeight(z->left), nodeHeight(z->right)) + 1;
+    y->height = maxNumber(nodeHeight(y->left), nodeHeight(y->right)) + 1;
+
+    // z->height = maxNumber(z->left->height, z->right->height) + 1;
+    // y->height = maxNumber(y->left->height, y->right->height) + 1;
+
+    return y;
+}
+
+AVL *LRRotation(AVL *z)
+{
+    z->left = LeftRotation(z->left);
+    return RightRotation(z);
+}
+
+AVL *RLRotation(AVL *z)
+{
+    z->right = RightRotation(z->right);
+    return LeftRotation(z);
+}
+
+
+AVL *insert(AVL *root, MatchTeamData team)
+{
+
+    if (root == NULL)
+    {
+        root = (AVL*)malloc(sizeof(AVL));
+        root->team.teamName = malloc(sizeof(char) * strlen(team.teamName) + 1);
+        root->team.points = team.points;
+        strcpy(root->team.teamName, team.teamName);
+        root->height = 0;
+        root->left = root->right = NULL;
+        return root;
+    }
+
+    if(root->team.points > team.points)
+        root->left = insert(root->left, team);
+    else if(root->team.points < team.points)
+        root->right = insert(root->right, team);
+    else
+    {
+        if(strcmp(team.teamName, root->team.teamName) < 0)
+            root->left = insert(root->left, team);
+        else 
+            root->right = insert(root->right, team);
+    }
+
+    root->height = 1 + maxNumber(nodeHeight(root->left), nodeHeight(root->right));
+
+    //root->height = 1 + maxNumber(root->left->height, root->right->height);
+
+    int k = (nodeHeight(root->left) - nodeHeight(root->right));
+
+    if(k > 1)
+    {
+        if(root->left->team.points > team.points)
+            return RightRotation(root);
+        else if(root->left->team.points == team.points)
+        {
+            if(strcmp(team.teamName, root->left->team.teamName) < 0)
+                return RightRotation(root);
+            else 
+                return LeftRotation(root);
+        }
+    }
+
+    if(k < -1)
+    {
+        if(root->right->team.points < team.points)
+            return LeftRotation(root);
+        else if(root->right->team.points == team.points)
+        {
+            if(strcmp(team.teamName, root->right->team.teamName) > 0)
+                return LeftRotation(root);
+            else 
+                return RightRotation(root);
+        }
+    }
+    
+
+    if(k > 1 && root->left->team.points < team.points)
+        return RLRotation(root);
+    if(k < -1 && root->right->team.points > team.points)
+        return LRRotation(root);
+
+    return root;
+}
+
+AVL *createAVL(BST *BSTroot) 
+{
+
+    AVL *root = NULL;
+    // root->left = NULL;
+    // root->right = NULL;    
+
+    createAVLfromBST(BSTroot, &root);
+
+    return root;
+}
+
+void createAVLfromBST(BST *BST, AVL **AVL)
+{
+    if (BST == NULL) {
+        return;
+    }
+    createAVLfromBST(BST->right, AVL);
+    *AVL = insert(*AVL, BST->team);
+    createAVLfromBST(BST->left, AVL);
+}
+
+// void printAVLLayer(AVL *root, FILE *f)
+// {
+//     if(root == NULL)
+//             return;
+//     if(root->height == 2)
+//     {
+//         printAVLLayer(root->left, f);
+//         fprintf(f, "%s %d\n", root->team.teamName, root->height);
+//         printAVLLayer(root->right, f);
+//         // fprintf(f, "%s\n", root->team.teamName);
+
+//     }
+// }
+
+
+
+void printAVL(AVL *root, FILE *f, int level)
+{
+    if(root == NULL)
+    {
+        return;
+    }
+    if(level == 1)
+    {
+        fprintf(f, "%s\n", root->team.teamName);
+    }
+    else if(level > 1)
+    {
+        printAVL(root->right, f, level - 1);
+        printAVL(root->left, f, level - 1);
+    }
+
+}
+
+void printTreeAVL(AVL *root, int level) {
+    int i;
+    if (root == NULL) {
+        return;
+    }
+
+    // Crește distanța între niveluri
+
+    // Procesăm fiul drept mai întâi
+    printTreeAVL(root->right, level + 1);
+
+    // Afișăm nodul curent după spațierea corespunzătoare
+    printf("\n");
+    for (i = 0; i < level; i++) {
+        printf("\t");
+    }
+    printf("%s\n", root->team.teamName);
+
+    // Procesăm fiul stâng
+    printTreeAVL(root->left, level +1);
+}
