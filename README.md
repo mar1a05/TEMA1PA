@@ -8,4 +8,4 @@ Proiectul a implicat implementarea unor structuri de date învățate in cursul 
 
 Pentru ca programul sa poată fi rulat, trebuie descărcate toate fișierele si rulata comanda:
 
-`./checker.sh`
+```./checker.sh```
