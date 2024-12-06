@@ -19,3 +19,5 @@ Task-urile au fost rezolvate în ordinea lor din cerință, iar problemele care 
 ## Cum funcționează checker-ul?
 
 Pe scurt, acesta verifica rând pe rând daca fișierul .out din folderul out al unui test specific este identic cu fișierul .out din folder-ul rezultate al aceluiași test. Apoi, pe baza acestei verificări, se determină punctajul luat pe fiecare task.
+
+tralala
